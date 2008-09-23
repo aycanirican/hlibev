@@ -2,18 +2,19 @@ module Main where
 
 import System.IO
 import Foreign
-import Foreign.C
 import Foreign.Marshal.Alloc
 
 import System.Environment (getArgs)
 
 import Network hiding (accept)
-import Network.Libev
-import Network.Socket (fdSocket, recv, send, accept)
-import Network.BSD
+import Network.Libev as EV
+
+import Network.Socket hiding (send, sendTo, recv, recvFrom)
+import Network.Socket.ByteString
+import qualified Data.ByteString as B
+import Data.Char (ord)
 
 import Control.Concurrent
-import Control.Concurrent.MVar (putMVar)
 import Control.Exception (finally)
 
 -- stdinCB :: IoCallback
@@ -33,28 +34,31 @@ import Control.Exception (finally)
 --   listen sock 10
 --   return sock
 
+testData = B.pack $ map (fromIntegral . ord) "HTTP/1.1 200 OK\nContent-Type:text/html;charset=UTF-8\n\n<html><body><p>Haskell and libev working together...</p></body></html>\n"
+
 connectorCB :: Socket -> IoCallback
-connectorCB s l w r = do
-  putStrLn "Connector Called..."
+connectorCB s l w _ = do
   evIoStop l w
   free w
-  recvdata <- recv s 1024
-  senddata <- send s "<html><body><p>Haskell and libev working together...</p></body></html>"
+  --putStrLn $ "Connector Called on: " ++ show (fdSocket s)
+  _ <- recv s 1024
+  _ <- send s testData
   sClose s
+  --putStrLn $ "Connector socket closed: " ++ show (fdSocket s)
   return ()
 
 acceptorCB :: Socket -> IoCallback
-acceptorCB s l w r = do
-  putStrLn "Accepting..."
-  (sock, sockaddr) <- accept s
-  putStrLn "Accepted."
+acceptorCB s l _ _ = do
+  --putStrLn "Accepting..."
+  (sock, _) <- accept s
+  --putStrLn "Accepted."
   ioW <- mkEvIo
   ioCB <- mkIoCallback $ connectorCB sock
   evIoInit ioW ioCB (fdSocket sock) ev_read
   evIoStart l ioW
-  putStrLn "client callback registered."
+  --putStrLn "client callback registered."
   return ()
-    
+
 start servSock = withSocketsDo $ do
   loop <- evLoopNew 0
   ioW <- mkEvIo
@@ -66,12 +70,11 @@ start servSock = withSocketsDo $ do
   freeHaskellFunPtr ioCB
   return ()
 
+main :: IO ()
 main = do
   [portStr] <- getArgs
   let port = fromIntegral (read portStr :: Int)
   servSock <- listenOn $ PortNumber port
-  putStrLn $ "listening on: " ++ show port 
-  start servSock `finally` sClose servSock
-  -- mvar <- newEmptyMVar
-  -- tid <- forkOS (test `finally` putMVar mvar ())
-  -- return mvar
+  putStrLn $ "listening on: " ++ show port
+  runInBoundThread (start servSock) `finally` sClose servSock
+  return ()

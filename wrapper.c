@@ -16,19 +16,16 @@ void wev_loop_destroy(struct ev_loop *l) { ev_loop_destroy(l); }
 /* ev_io */
 void wev_io_init (ev_io *w, void *cb, int fd, int events) { ev_io_init(w,cb,fd,events); }
 void wev_io_start (struct ev_loop *l, ev_io *w) { ev_io_start(l, w); }
-void wev_io_stop (struct ev_loop *l, ev_io *w) { ev_io_start(l, w); }
-
-int wfdofevio (struct ev_io *evio) { return evio->fd; }
-
-void *wmkevio () { size_t s = (sizeof (struct ev_io)); void *ptr = malloc (s); bzero(ptr,s); return ptr;}
-void wfreeevio (struct ev_io *evio) { free(evio); }
+void wev_io_stop (struct ev_loop *l, ev_io *w) { ev_io_stop(l, w); }
+/* void *wmkevio () { size_t s = (sizeof (struct ev_io)); void *ptr = malloc (s); bzero(ptr,s); return ptr;} */
+/* void wfreeevio (struct ev_io *evio) { free(evio); } */
 
 /* ev_timer */
 void wev_timer_init (ev_timer *w, void *cb, ev_tstamp after, ev_tstamp repeat) 
 { ev_timer_init(w,cb,after,repeat); }
 
 void wev_timer_start (struct ev_loop *l, ev_timer *w) { ev_timer_start(l, w); }
-void wev_timer_stop (struct ev_loop *l, ev_timer *w) { ev_timer_start(l, w); }
+void wev_timer_stop (struct ev_loop *l, ev_timer *w) { ev_timer_stop(l, w); }
 
 /* test: gcc -g -lev wrapper.c -o wrapper */
 
