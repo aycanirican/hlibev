@@ -18,6 +18,8 @@ void wev_io_init (ev_io *w, void *cb, int fd, int events) { ev_io_init(w,cb,fd,e
 void wev_io_start (struct ev_loop *l, ev_io *w) { ev_io_start(l, w); }
 void wev_io_stop (struct ev_loop *l, ev_io *w) { ev_io_start(l, w); }
 
+int wfdofevio (struct ev_io *evio) { return evio->fd; }
+
 void *wmkevio () { size_t s = (sizeof (struct ev_io)); void *ptr = malloc (s); bzero(ptr,s); return ptr;}
 void wfreeevio (struct ev_io *evio) { free(evio); }
 

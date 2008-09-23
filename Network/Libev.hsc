@@ -68,6 +68,7 @@ foreign import ccall unsafe "wev_loop_destroy" evLoopDestroy :: EvLoopPtr -> IO 
 foreign import ccall "wev_io_init" evIoInit :: EvIoPtr -> FunPtr IoCallback -> CInt -> CInt -> IO ()
 foreign import ccall unsafe "wev_io_start" evIoStart :: EvLoopPtr -> EvIoPtr -> IO ()
 foreign import ccall unsafe "wev_io_stop" evIoStop :: EvLoopPtr -> EvIoPtr -> IO ()
+foreign import ccall unsafe "wfdofevio" fdOfEvIo :: EvIoPtr -> IO CInt
 
 foreign import ccall "wev_timer_init" evTimerInit :: EvTimerPtr -> FunPtr TimerCallback -> CInt -> CInt -> IO ()
 foreign import ccall unsafe "wev_timer_start" evTimerStart :: EvLoopPtr -> EvTimerPtr -> IO ()
