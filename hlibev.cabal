@@ -13,5 +13,5 @@ Extensions:      ForeignFunctionInterface
 Exposed-Modules: Network.Libev
 extra-libraries: ev
 extra-lib-dirs:  /usr/lib
-ghc-options:     -Wall
+ghc-options:     -Wall -fvia-C -O2
 c-sources:	 wrapper.c

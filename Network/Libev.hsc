@@ -9,6 +9,7 @@ module Network.Libev
     -- ev_io
     , mkEvIo
     , mkIoCallback
+    , IoCallback (..)
     , evIoInit
     , evIoStart
     , evIoStop
@@ -19,6 +20,10 @@ module Network.Libev
     -- events
     , ev_read
     , ev_write
+    , c_accept
+    , c_close
+    , c_read
+    , c_write
     )
     where
 import Prelude hiding (repeat)
@@ -91,6 +96,11 @@ foreign import ccall unsafe "wev_io_stop" evIoStop :: EvLoopPtr -> EvIoPtr -> IO
 foreign import ccall unsafe "wev_timer_init" evTimerInit :: EvTimerPtr -> FunPtr TimerCallback -> CInt -> CInt -> IO ()
 foreign import ccall unsafe "wev_timer_start" evTimerStart :: EvLoopPtr -> EvTimerPtr -> IO ()
 foreign import ccall unsafe "wev_timer_stop" evTimerStop :: EvLoopPtr -> EvTimerPtr -> IO ()
+
+foreign import ccall unsafe "unistd.h close" c_close :: CInt -> IO (CInt)
+foreign import ccall unsafe "unistd.h read" c_read :: CInt -> CString -> CSize -> IO (CSize)
+foreign import ccall unsafe "unistd.h write" c_write :: CInt -> CString -> CSize -> IO (CSize)
+foreign import ccall unsafe "c_accept" c_accept :: CInt -> IO (CInt)
 
 -- callback wrappers
 foreign import ccall "wrapper" mkIoCallback :: IoCallback -> IO (FunPtr IoCallback)

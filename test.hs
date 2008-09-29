@@ -1,17 +1,19 @@
+{-# OPTIONS -ffi -fvia-C -O2 #-}
 module Main where
 
 import System.IO
 import Foreign
 import Foreign.Marshal.Alloc
+import Foreign.C
 
 import System.Environment (getArgs)
 
 import Network hiding (accept)
 import Network.Libev as EV
 
-import Network.Socket hiding (send, sendTo, recv, recvFrom)
-import Network.Socket.ByteString
-import qualified Data.ByteString as B
+import Network.Socket -- hiding (send, sendTo, recv, recvFrom)
+-- import Network.Socket.ByteString
+-- import qualified Data.ByteString as B
 import Data.Char (ord)
 
 import Control.Concurrent
@@ -34,27 +36,32 @@ import Control.Exception (finally)
 --   listen sock 10
 --   return sock
 
-testData = B.pack $ map (fromIntegral . ord) "HTTP/1.1 200 OK\nContent-Type:text/html;charset=UTF-8\n\n<html><body><p>Haskell and libev working together...</p></body></html>\n"
+-- testData = B.pack $ map (fromIntegral . ord) "HTTP/1.1 200 OK\nContent-Type:text/html;charset=UTF-8\n\n<html><body><p>Haskell and libev working together...</p></body></html>\n"
+testData = "HTTP/1.1 200 OK\nContent-Type:text/html;charset=UTF-8\n\n<html><body><p>Haskell and libev working together...</p></body></html>\n"
 
-connectorCB :: Socket -> IoCallback
-connectorCB s l w _ = do
+processSocket fd = do
+  _ <- allocaBytes 1024 $ \ptr -> c_read fd ptr 1024
+  _ <- withCString testData $ \str -> c_write fd str 125
+  c_close fd
+  return ()
+
+connectorCB :: CInt -> IoCallback
+connectorCB fd l w _ = do
   evIoStop l w
   free w
   --putStrLn $ "Connector Called on: " ++ show (fdSocket s)
-  _ <- recv s 1024
-  _ <- send s testData
-  sClose s
+  forkIO (processSocket fd)
   --putStrLn $ "Connector socket closed: " ++ show (fdSocket s)
   return ()
 
 acceptorCB :: Socket -> IoCallback
 acceptorCB s l _ _ = do
   --putStrLn "Accepting..."
-  (sock, _) <- accept s
+  fd <- c_accept (fdSocket s)
   --putStrLn "Accepted."
   ioW <- mkEvIo
-  ioCB <- mkIoCallback $ connectorCB sock
-  evIoInit ioW ioCB (fdSocket sock) ev_read
+  ioCB <- mkIoCallback $ connectorCB fd
+  evIoInit ioW ioCB fd ev_read
   evIoStart l ioW
   --putStrLn "client callback registered."
   return ()
@@ -76,5 +83,5 @@ main = do
   let port = fromIntegral (read portStr :: Int)
   servSock <- listenOn $ PortNumber port
   putStrLn $ "listening on: " ++ show port
-  runInBoundThread (start servSock) `finally` sClose servSock
+  start servSock `finally` sClose servSock
   return ()

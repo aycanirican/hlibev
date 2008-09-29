@@ -6,6 +6,23 @@
 #include <stdlib.h> // malloc
 #include <string.h> // bzero
 
+#include <stdlib.h>
+#include <assert.h>
+#include <stdio.h>
+#include <netdb.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/tcp.h>
+#include <unistd.h>
+#include <string.h>
+#include <fcntl.h>
+#include <errno.h>
+
+
 /* evloop */
 struct ev_loop * wev_default_loop (int f) { ev_default_loop(f); }
 struct ev_loop * wev_loop_new (unsigned int f) { ev_loop_new(f); }
@@ -26,6 +43,26 @@ void wev_timer_init (ev_timer *w, void *cb, ev_tstamp after, ev_tstamp repeat)
 
 void wev_timer_start (struct ev_loop *l, ev_timer *w) { ev_timer_start(l, w); }
 void wev_timer_stop (struct ev_loop *l, ev_timer *w) { ev_timer_stop(l, w); }
+
+void set_nonblocking(int fd)
+{
+    int flags;
+    /* If they have O_NONBLOCK, use the Posix way to do it */
+    if (-1 == (flags = fcntl(fd, F_GETFL, 0))) flags = 0;
+    int res = fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+    assert(res==0);
+}
+
+int c_accept(int server_fd) {
+  int fd = accept(server_fd, NULL, NULL);
+  if (fd == -1 && ( errno == EAGAIN || errno == EWOULDBLOCK) ) return -2;
+  if (fd > 0) {
+    set_nonblocking(fd);
+    return fd; 
+  } else {
+    return -1;
+  }
+}
 
 /* test: gcc -g -lev wrapper.c -o wrapper */
 
