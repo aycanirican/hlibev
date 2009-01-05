@@ -8,7 +8,9 @@ module Network.Libev
     , evLoopDestroy
     -- ev_io
     , mkEvIo
+    , mkEvTimer
     , mkIoCallback
+    , mkTimerCallback
     , IoCallback (..)
     , evIoInit
     , evIoStart
@@ -93,7 +95,7 @@ foreign import ccall unsafe "wev_io_init" evIoInit :: EvIoPtr -> FunPtr IoCallba
 foreign import ccall unsafe "wev_io_start" evIoStart :: EvLoopPtr -> EvIoPtr -> IO ()
 foreign import ccall unsafe "wev_io_stop" evIoStop :: EvLoopPtr -> EvIoPtr -> IO ()
 
-foreign import ccall unsafe "wev_timer_init" evTimerInit :: EvTimerPtr -> FunPtr TimerCallback -> CInt -> CInt -> IO ()
+foreign import ccall unsafe "wev_timer_init" evTimerInit :: EvTimerPtr -> FunPtr TimerCallback -> CFloat -> CFloat -> IO ()
 foreign import ccall unsafe "wev_timer_start" evTimerStart :: EvLoopPtr -> EvTimerPtr -> IO ()
 foreign import ccall unsafe "wev_timer_stop" evTimerStop :: EvLoopPtr -> EvTimerPtr -> IO ()
 
@@ -104,6 +106,7 @@ foreign import ccall unsafe "c_accept" c_accept :: CInt -> IO (CInt)
 
 -- callback wrappers
 foreign import ccall "wrapper" mkIoCallback :: IoCallback -> IO (FunPtr IoCallback)
+foreign import ccall "wrapper" mkTimerCallback :: IoCallback -> IO (FunPtr TimerCallback)
 
 -- mem allocators
 -- foreign import ccall unsafe "wmkevio" mkEvIo :: IO (EvIoPtr)
