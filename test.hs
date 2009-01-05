@@ -1,4 +1,5 @@
-{-# OPTIONS -ffi -fvia-C -O2 #-}
+{-# LANGUAGE ForeignFunctionInterface#-}
+{-# OPTIONS -fvia-C -O2 #-}
 module Main where
 
 import System.IO

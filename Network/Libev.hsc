@@ -1,5 +1,4 @@
-{-# OPTIONS -ffi #-}
-
+{-# LANGUAGE ForeignFunctionInterface #-}
 module Network.Libev
     ( evDefaultLoop
     , evLoopNew
@@ -11,7 +10,7 @@ module Network.Libev
     , mkEvTimer
     , mkIoCallback
     , mkTimerCallback
-    , IoCallback (..)
+    , IoCallback -- (..)
     , evIoInit
     , evIoStart
     , evIoStop
