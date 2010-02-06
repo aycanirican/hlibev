@@ -19,8 +19,12 @@ module Network.Libev
     -- ev_io
     , mkEvIo
     , mkEvTimer
+    , freeEvIo
+    , freeEvTimer
     , mkIoCallback
     , mkTimerCallback
+    , freeIoCallback
+    , freeTimerCallback
     , IoCallback -- (..)
     , evIoInit
     , evIoStart
@@ -143,7 +147,13 @@ foreign import ccall unsafe "ev.h ev_now"  evNow  :: EvLoopPtr -> IO EvTimestamp
 
 -- callback wrappers
 foreign import ccall "wrapper" mkIoCallback :: IoCallback -> IO (FunPtr IoCallback)
-foreign import ccall "wrapper" mkTimerCallback :: IoCallback -> IO (FunPtr TimerCallback)
+foreign import ccall "wrapper" mkTimerCallback :: TimerCallback -> IO (FunPtr TimerCallback)
+
+freeIoCallback :: FunPtr IoCallback -> IO ()
+freeIoCallback = freeHaskellFunPtr
+
+freeTimerCallback :: FunPtr TimerCallback -> IO ()
+freeTimerCallback = freeHaskellFunPtr
 
 -- mem allocators
 -- foreign import ccall unsafe "wmkevio" mkEvIo :: IO (EvIoPtr)
@@ -152,5 +162,11 @@ foreign import ccall "wrapper" mkTimerCallback :: IoCallback -> IO (FunPtr Timer
 mkEvIo :: IO (EvIoPtr)
 mkEvIo = malloc
 
+freeEvIo :: EvIoPtr -> IO ()
+freeEvIo = free
+
 mkEvTimer :: IO (EvTimerPtr)
 mkEvTimer = malloc
+
+freeEvTimer :: EvTimerPtr -> IO ()
+freeEvTimer = free
