@@ -39,6 +39,7 @@ module Network.Libev
     , c_close
     , c_read
     , c_write
+    , c_setnonblocking
     )
     where
 
@@ -132,6 +133,7 @@ foreign import ccall unsafe "unistd.h close" c_close :: CInt -> IO (CInt)
 foreign import ccall unsafe "unistd.h read" c_read :: CInt -> CString -> CSize -> IO (CSize)
 foreign import ccall unsafe "unistd.h write" c_write :: CInt -> CString -> CSize -> IO (CSize)
 foreign import ccall unsafe "c_accept" c_accept :: CInt -> IO (CInt)
+foreign import ccall unsafe "set_nonblocking" c_setnonblocking :: CInt -> IO ()
 
 foreign import ccall unsafe "ev.h ev_recommended_backends" evRecommendedBackends :: IO CInt
 
