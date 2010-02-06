@@ -5,6 +5,17 @@ module Network.Libev
     , evLoop
     , evUnloop
     , evLoopDestroy
+    -- ev_default_loop flags
+    , evRecommendedBackends
+    , evflag_auto
+    , evflag_noenv
+    , evbackend_select
+    , evbackend_poll
+    , evbackend_epoll
+    , evbackend_kqueue
+    , evbackend_devpoll
+    , evbackend_port
+    , evbackend_all
     -- ev_io
     , mkEvIo
     , mkEvTimer
@@ -27,6 +38,7 @@ module Network.Libev
     , c_write
     )
     where
+
 import Prelude hiding (repeat)
 import System.IO
 import Foreign
@@ -34,9 +46,22 @@ import Foreign.C
 
 #include <ev.h>
 
--- * Marhsaled Data Types
+-- * Marshalled Data Types
 
 type CEventType = CInt
+type CEvFlagType = CInt
+
+#{enum CEvFlagType, ,
+   evflag_auto       = EVFLAG_AUTO
+ , evflag_noenv      = EVFLAG_NOENV
+ , evbackend_select  = EVBACKEND_SELECT
+ , evbackend_poll    = EVBACKEND_POLL
+ , evbackend_epoll   = EVBACKEND_EPOLL
+ , evbackend_kqueue  = EVBACKEND_KQUEUE
+ , evbackend_devpoll = EVBACKEND_DEVPOLL
+ , evbackend_port    = EVBACKEND_PORT
+ , evbackend_all     = EVBACKEND_ALL
+}
 
 #{enum CEventType, ,
      ev_read  = EV_READ
@@ -102,6 +127,8 @@ foreign import ccall unsafe "unistd.h close" c_close :: CInt -> IO (CInt)
 foreign import ccall unsafe "unistd.h read" c_read :: CInt -> CString -> CSize -> IO (CSize)
 foreign import ccall unsafe "unistd.h write" c_write :: CInt -> CString -> CSize -> IO (CSize)
 foreign import ccall unsafe "c_accept" c_accept :: CInt -> IO (CInt)
+
+foreign import ccall unsafe "ev.h ev_recommended_backends" evRecommendedBackends :: IO CInt
 
 -- callback wrappers
 foreign import ccall "wrapper" mkIoCallback :: IoCallback -> IO (FunPtr IoCallback)
