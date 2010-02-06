@@ -29,6 +29,9 @@ module Network.Libev
     , evTimerInit
     , evTimerStart
     , evTimerStop
+    -- time functions
+    , evNow
+    , evTime
     -- events
     , ev_read
     , ev_write
@@ -109,6 +112,8 @@ instance Storable EvTimer where
 type IoCallback = EvLoopPtr -> EvIoPtr -> CInt -> IO ()
 type TimerCallback = EvLoopPtr -> EvTimerPtr -> CInt -> IO ()
 
+type EvTimestamp = CDouble
+
 foreign import ccall unsafe "wev_default_loop" evDefaultLoop :: CInt -> IO EvLoopPtr
 foreign import ccall "wev_loop" evLoop :: EvLoopPtr -> CInt -> IO ()
 foreign import ccall "wev_unloop" evUnloop :: EvLoopPtr -> CInt -> IO ()
@@ -119,7 +124,7 @@ foreign import ccall unsafe "wev_io_init" evIoInit :: EvIoPtr -> FunPtr IoCallba
 foreign import ccall unsafe "wev_io_start" evIoStart :: EvLoopPtr -> EvIoPtr -> IO ()
 foreign import ccall unsafe "wev_io_stop" evIoStop :: EvLoopPtr -> EvIoPtr -> IO ()
 
-foreign import ccall unsafe "wev_timer_init" evTimerInit :: EvTimerPtr -> FunPtr TimerCallback -> CFloat -> CFloat -> IO ()
+foreign import ccall unsafe "wev_timer_init" evTimerInit :: EvTimerPtr -> FunPtr TimerCallback -> EvTimestamp -> EvTimestamp -> IO ()
 foreign import ccall unsafe "wev_timer_start" evTimerStart :: EvLoopPtr -> EvTimerPtr -> IO ()
 foreign import ccall unsafe "wev_timer_stop" evTimerStop :: EvLoopPtr -> EvTimerPtr -> IO ()
 
@@ -129,6 +134,10 @@ foreign import ccall unsafe "unistd.h write" c_write :: CInt -> CString -> CSize
 foreign import ccall unsafe "c_accept" c_accept :: CInt -> IO (CInt)
 
 foreign import ccall unsafe "ev.h ev_recommended_backends" evRecommendedBackends :: IO CInt
+
+-- time functions
+foreign import ccall unsafe "ev.h ev_time" evTime :: IO EvTimestamp
+foreign import ccall unsafe "ev.h ev_now"  evNow  :: EvLoopPtr -> IO EvTimestamp
 
 -- callback wrappers
 foreign import ccall "wrapper" mkIoCallback :: IoCallback -> IO (FunPtr IoCallback)
