@@ -1,3 +1,4 @@
+{-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 module Network.Libev
     ( evDefaultLoop
@@ -76,10 +77,10 @@ type CEvFlagType = CInt
    , ev_write = EV_WRITE
 }
 
-data EvLoop       = EvLoop
+data EvLoop
 type EvLoopPtr    = Ptr EvLoop
 
-data EvWatcher    = EvWatcher
+data EvWatcher
 type EvWatcherPtr = Ptr EvWatcher
 
 data EvIo         = EvIo { fd :: CInt, events :: CInt }
