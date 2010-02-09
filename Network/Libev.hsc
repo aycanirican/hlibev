@@ -26,7 +26,6 @@ module Network.Libev
     , evbackend_kqueue
     , evbackend_devpoll
     , evbackend_port
-    , evbackend_all
 
     -- ** Event flags
     , CEventType
@@ -100,7 +99,6 @@ type CEvFlagType = CInt
  , evbackend_kqueue  = EVBACKEND_KQUEUE
  , evbackend_devpoll = EVBACKEND_DEVPOLL
  , evbackend_port    = EVBACKEND_PORT
- , evbackend_all     = EVBACKEND_ALL
 }
 
 #{enum CEventType, ,
