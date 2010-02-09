@@ -1,7 +1,18 @@
 {-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 module Network.Libev
-    ( evDefaultLoop
+    ( 
+    -- Types
+      CEventType
+    , CEvFlagType
+    , EvLoopPtr
+    , EvIoPtr
+    , EvTimestamp
+    , EvTimerPtr
+    , EvWatcherPtr
+    , IoCallback
+    , TimerCallback
+    , evDefaultLoop
     , evLoopNew
     , evLoop
     , evUnloop
@@ -26,7 +37,6 @@ module Network.Libev
     , mkTimerCallback
     , freeIoCallback
     , freeTimerCallback
-    , IoCallback -- (..)
     , evIoInit
     , evIoStart
     , evIoStop
