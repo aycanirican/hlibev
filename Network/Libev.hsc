@@ -44,13 +44,9 @@ module Network.Libev
     , EvIoPtr
     , IoCallback
     , mkEvIo
-    , mkEvTimer
     , freeEvIo
-    , freeEvTimer
     , mkIoCallback
-    , mkTimerCallback
     , freeIoCallback
-    , freeTimerCallback
     , evIoInit
     , evIoStart
     , evIoStop
@@ -59,10 +55,26 @@ module Network.Libev
     -- | See libev docs: <http://pod.tst.eu/http://cvs.schmorp.de/libev/ev.pod#code_ev_timer_code_relative_and_opti>
     , EvTimerPtr
     , TimerCallback
-
+    , mkEvTimer
+    , freeEvTimer
+    , mkTimerCallback
+    , freeTimerCallback
     , evTimerInit
     , evTimerStart
     , evTimerStop
+
+    -- * @ev\_async@@
+    -- | See libev docs: <http://pod.tst.eu/http://cvs.schmorp.de/libev/ev.pod#code_ev_async_code_how_to_wake_up_an>
+    , EvAsyncPtr
+    , AsyncCallback
+    , mkEvAsync
+    , freeEvAsync
+    , evAsyncInit
+    , evAsyncSend
+    , evAsyncStart
+    , evAsyncStop
+    , mkAsyncCallback
+    , freeAsyncCallback
 
     -- * Time functions
     , EvTimestamp
@@ -124,6 +136,9 @@ type EvIoPtr      = Ptr EvIo
 data EvTimer      = EvTimer { repeat :: Double }
 type EvTimerPtr   = Ptr EvTimer
 
+data EvAsync
+type EvAsyncPtr   = Ptr EvAsync
+
 instance Storable EvWatcher where
     sizeOf    _ = (#size struct ev_watcher)
     alignment _ = alignment (undefined :: CInt)
@@ -148,6 +163,10 @@ instance Storable EvTimer where
     poke ptr (EvTimer repeat') = do
       (#poke ev_timer, repeat) ptr repeat'
 
+instance Storable EvAsync where
+    sizeOf    _ = (#size struct ev_async)
+    alignment _ = alignment (undefined :: CInt)
+
 
 -- | An 'IoCallback' is called when a file descriptor becomes readable or
 -- writable. It takes a pointer to an @ev\_loop@ structure, a pointer to an
@@ -158,6 +177,10 @@ type IoCallback = EvLoopPtr -> EvIoPtr -> CEventType -> IO ()
 -- @ev\_loop@ structure, a pointer to an @ev\_io@ structure, and an (unused?)
 -- event mask.
 type TimerCallback = EvLoopPtr -> EvTimerPtr -> CEventType -> IO ()
+
+-- | An 'AsyncCallback' is called when you wakeup an event loop with
+-- @ev_async_send@
+type AsyncCallback = EvLoopPtr -> EvAsyncPtr -> CEventType -> IO ()
 
 -- | 'MutexCallback' is called by @ev\_set\_loop\_release\_cb@
 type MutexCallback = EvLoopPtr -> IO ()
@@ -175,6 +198,11 @@ type EvTimestamp = CDouble
 -- to acquire the 'MVar' returned here (using 'withMVar') whenever you call any
 -- of the @ev@ functions. Very bad C-land crash\/bang\/boom could otherwise
 -- result.
+--
+-- ALSO IMPORTANT: any changes you make to an 'EvLoopPtr' from another thread
+-- while the event loop thread is blocked inside @ev\_loop()@ will NOT take
+-- effect until the the event loop thread unblocks. You'll need to set up an
+-- @ev\_async@ watcher in order to wake up the event loop thread.
 setupLockingForLoop :: EvLoopPtr
                     -> IO (FunPtr MutexCallback, FunPtr MutexCallback, MVar ())
 setupLockingForLoop loop = do
@@ -210,6 +238,22 @@ foreign import ccall unsafe "wev_io_init" evIoInit :: EvIoPtr -> FunPtr IoCallba
 foreign import ccall unsafe "wev_io_start" evIoStart :: EvLoopPtr -> EvIoPtr -> IO ()
 foreign import ccall unsafe "wev_io_stop" evIoStop :: EvLoopPtr -> EvIoPtr -> IO ()
 
+foreign import ccall unsafe "wev_async_init" evAsyncInit :: EvAsyncPtr
+                                                         -> FunPtr AsyncCallback
+                                                         -> IO ()
+
+foreign import ccall unsafe "wev_async_send" evAsyncSend :: EvLoopPtr
+                                                         -> EvAsyncPtr
+                                                         -> IO ()
+
+foreign import ccall unsafe "wev_async_start" evAsyncStart :: EvLoopPtr
+                                                           -> EvAsyncPtr
+                                                           -> IO ()
+
+foreign import ccall unsafe "wev_async_stop" evAsyncStop :: EvLoopPtr
+                                                         -> EvAsyncPtr
+                                                         -> IO ()
+
 foreign import ccall unsafe "wev_timer_init" evTimerInit :: EvTimerPtr -> FunPtr TimerCallback -> EvTimestamp -> EvTimestamp -> IO ()
 foreign import ccall unsafe "wev_timer_start" evTimerStart :: EvLoopPtr -> EvTimerPtr -> IO ()
 foreign import ccall unsafe "wev_timer_stop" evTimerStop :: EvLoopPtr -> EvTimerPtr -> IO ()
@@ -236,14 +280,24 @@ foreign import ccall unsafe "ev.h ev_now"  evNow  :: EvLoopPtr -> IO EvTimestamp
 -- | Wrap up an 'IoCallback' so it can be delivered into C-land. This resource
 -- is not garbage-collected, you are responsible for freeing it with
 -- 'freeIoCallback'.
-foreign import ccall "wrapper" mkIoCallback :: IoCallback -> IO (FunPtr IoCallback)
+foreign import ccall "wrapper" mkIoCallback :: IoCallback
+                                            -> IO (FunPtr IoCallback)
 
 -- | Wrap up a 'TimerCallback' so it can be delivered into C-land. This
 -- resource is not garbage-collected, you are responsible for freeing it with
 -- 'freeTimerCallback'.
-foreign import ccall "wrapper" mkTimerCallback :: TimerCallback -> IO (FunPtr TimerCallback)
+foreign import ccall "wrapper" mkTimerCallback :: TimerCallback
+                                               -> IO (FunPtr TimerCallback)
 
-foreign import ccall "wrapper" mkMutexCallback :: MutexCallback -> IO (FunPtr MutexCallback)
+-- | Wrap up an 'AsyncCallback' so it can be delivered into C-land. This
+-- resource is not garbage-collected, you are responsible for freeing it with
+-- 'freeAsyncCallback'.
+foreign import ccall "wrapper" mkAsyncCallback :: AsyncCallback
+                                               -> IO (FunPtr AsyncCallback)
+
+
+foreign import ccall "wrapper" mkMutexCallback :: MutexCallback
+                                               -> IO (FunPtr MutexCallback)
 
 freeIoCallback :: FunPtr IoCallback -> IO ()
 freeIoCallback = freeHaskellFunPtr
@@ -253,6 +307,9 @@ freeMutexCallback = freeHaskellFunPtr
 
 freeTimerCallback :: FunPtr TimerCallback -> IO ()
 freeTimerCallback = freeHaskellFunPtr
+
+freeAsyncCallback :: FunPtr AsyncCallback -> IO ()
+freeAsyncCallback = freeHaskellFunPtr
 
 -- mem allocators
 -- foreign import ccall unsafe "wmkevio" mkEvIo :: IO (EvIoPtr)
@@ -272,6 +329,15 @@ freeEvIo = free
 mkEvTimer :: IO (EvTimerPtr)
 mkEvTimer = malloc
 
--- | free() an 'EvIoPtr'
+-- | free() an 'EvTimer'
 freeEvTimer :: EvTimerPtr -> IO ()
 freeEvTimer = free
+
+-- | Makes a new @ev_async@ struct using 'malloc'. You are responsible for
+-- freeing it with 'freeEvAsync'.
+mkEvAsync :: IO (EvAsyncPtr)
+mkEvAsync = malloc
+
+-- | free() an 'EvAsync'
+freeEvAsync :: EvAsyncPtr -> IO ()
+freeEvAsync = free
