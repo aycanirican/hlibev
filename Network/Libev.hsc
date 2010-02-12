@@ -27,6 +27,11 @@ module Network.Libev
     , evbackend_devpoll
     , evbackend_port
 
+    -- ** Locking for event loops
+    , MutexCallback
+    , setupLockingForLoop
+    , freeMutexCallback
+
     -- ** Event flags
     , CEventType
     , CEvFlagType
@@ -73,6 +78,7 @@ module Network.Libev
     )
     where
 
+import Control.Concurrent.MVar
 import Prelude hiding (repeat)
 import System.IO
 import Foreign
@@ -148,20 +154,51 @@ instance Storable EvTimer where
 -- @ev\_io@ structure, and an event mask.
 type IoCallback = EvLoopPtr -> EvIoPtr -> CEventType -> IO ()
 
-
 -- | A 'TimerCallback' is called when a timer expires. It takes a pointer to an
 -- @ev\_loop@ structure, a pointer to an @ev\_io@ structure, and an (unused?)
 -- event mask.
 type TimerCallback = EvLoopPtr -> EvTimerPtr -> CEventType -> IO ()
 
+-- | 'MutexCallback' is called by @ev\_set\_loop\_release\_cb@
+type MutexCallback = EvLoopPtr -> IO ()
+
 -- | Libev timestamp values are C doubles containing the (floating) number of
 -- seconds since Jan 1, 1970.
 type EvTimestamp = CDouble
 
+-- | Set up the given loop for mutex locking from haskell-land -- if you want
+-- to touch the loop from other Haskell threads, you'll need to do this. The
+-- two FunPtr objects returned need to be explicitly freed with
+-- 'freeMutexCallback'.
+--
+-- IMPORTANT: if you want multithreaded access to an 'EvLoopPtr', you'll have
+-- to acquire the 'MVar' returned here (using 'withMVar') whenever you call any
+-- of the @ev@ functions. Very bad C-land crash\/bang\/boom could otherwise
+-- result.
+setupLockingForLoop :: EvLoopPtr
+                    -> IO (FunPtr MutexCallback, FunPtr MutexCallback, MVar ())
+setupLockingForLoop loop = do
+    mvar <- newMVar ()
+
+    acq <- mkMutexCallback $ acquire mvar
+    rel <- mkMutexCallback $ release mvar
+
+    evSetLoopReleaseCB loop rel acq
+
+    return (rel, acq, mvar)
+  where
+    release mvar _ = putMVar mvar ()
+    acquire mvar _ = takeMVar mvar
+
+
+foreign import ccall safe "ev_set_loop_release_cb"
+        evSetLoopReleaseCB :: EvLoopPtr
+                           -> FunPtr MutexCallback
+                           -> FunPtr MutexCallback
+                           -> IO ()
 
 -- | Returns the default set of 'CEvFlagType' flags
 foreign import ccall unsafe "ev.h ev_recommended_backends" evRecommendedBackends :: IO CEvFlagType
-
 
 foreign import ccall unsafe "wev_default_loop" evDefaultLoop :: CInt -> IO EvLoopPtr
 foreign import ccall "wev_loop" evLoop :: EvLoopPtr -> CInt -> IO ()
@@ -206,8 +243,13 @@ foreign import ccall "wrapper" mkIoCallback :: IoCallback -> IO (FunPtr IoCallba
 -- 'freeTimerCallback'.
 foreign import ccall "wrapper" mkTimerCallback :: TimerCallback -> IO (FunPtr TimerCallback)
 
+foreign import ccall "wrapper" mkMutexCallback :: MutexCallback -> IO (FunPtr MutexCallback)
+
 freeIoCallback :: FunPtr IoCallback -> IO ()
 freeIoCallback = freeHaskellFunPtr
+
+freeMutexCallback :: FunPtr MutexCallback -> IO ()
+freeMutexCallback = freeHaskellFunPtr
 
 freeTimerCallback :: FunPtr TimerCallback -> IO ()
 freeTimerCallback = freeHaskellFunPtr
