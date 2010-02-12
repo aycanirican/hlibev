@@ -7,7 +7,7 @@ Maintainer:      aycan.irican@core.gen.tr
 Description:     FFI interface to libev
 Synopsis:        FFI interface to libev
 Category:        Foreign
-Build-Depends:   base >= 2 && < 4, network
+Build-Depends:   base >= 4 && < 5, network
 Build-Type:      Simple
 Extensions:      ForeignFunctionInterface
 Exposed-Modules: Network.Libev
