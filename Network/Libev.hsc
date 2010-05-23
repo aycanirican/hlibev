@@ -92,7 +92,6 @@ module Network.Libev
 
 import Control.Concurrent.MVar
 import Prelude hiding (repeat)
-import System.IO
 import Foreign
 import Foreign.C
 
