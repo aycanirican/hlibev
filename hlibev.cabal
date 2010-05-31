@@ -1,17 +1,23 @@
 Name:            hlibev
-Version:         0.2.3
+Version:         0.2.4
 Author:          Aycan iRiCAN
 License:         BSD3
 License-file:    LICENSE
+Homepage:        http://github.com/aycanirican/hlibev
 Maintainer:      aycan.irican@core.gen.tr
 Description:     FFI interface to libev
 Synopsis:        FFI interface to libev
 Category:        Foreign
 Build-Depends:   base >= 4 && < 5, network
 Build-Type:      Simple
+Cabal-version:   >=1.6
 Extensions:      ForeignFunctionInterface
 Exposed-Modules: Network.Libev
 extra-libraries: ev
 extra-lib-dirs:  /usr/lib
 ghc-options:     -Wall -fvia-C -O2
 c-sources:	 wrapper.c
+
+source-repository head
+  type:     git
+  location: git://github.com/aycanirican/hlibev.git
