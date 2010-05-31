@@ -259,7 +259,7 @@ foreign import ccall unsafe "wev_timer_init" evTimerInit :: EvTimerPtr -> FunPtr
 foreign import ccall unsafe "wev_timer_start" evTimerStart :: EvLoopPtr -> EvTimerPtr -> IO ()
 foreign import ccall unsafe "wev_timer_stop" evTimerStop :: EvLoopPtr -> EvTimerPtr -> IO ()
 foreign import ccall unsafe "wev_timer_again" evTimerAgain :: EvLoopPtr -> EvTimerPtr -> IO ()
-foreign import ccall unsafe "wev_timer_remaining" evTimerRemaining :: EvLoopPtr -> EvTimerPtr -> IO (CDouble)
+foreign import ccall unsafe "wev_timer_remaining" evTimerRemaining :: EvLoopPtr -> EvTimerPtr -> IO (EvTimestamp)
 
 foreign import ccall unsafe "unistd.h close" c_close :: CInt -> IO (CInt)
 foreign import ccall unsafe "unistd.h read" c_read :: CInt -> CString -> CSize -> IO (CSize)
