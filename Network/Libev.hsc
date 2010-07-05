@@ -53,6 +53,7 @@ module Network.Libev
 
     -- * @ev\_timer@
     -- | See libev docs: <http://pod.tst.eu/http://cvs.schmorp.de/libev/ev.pod#code_ev_timer_code_relative_and_opti>
+    , EvTimer
     , EvTimerPtr
     , TimerCallback
     , mkEvTimer
