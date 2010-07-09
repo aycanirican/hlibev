@@ -176,7 +176,7 @@ instance Storable EvAsync where
 type IoCallback = EvLoopPtr -> EvIoPtr -> CEventType -> IO ()
 
 -- | A 'TimerCallback' is called when a timer expires. It takes a pointer to an
--- @ev\_loop@ structure, a pointer to an @ev\_io@ structure, and an (unused?)
+-- @ev\_loop@ structure, a pointer to an @ev\_timer@ structure, and an (unused?)
 -- event mask.
 type TimerCallback = EvLoopPtr -> EvTimerPtr -> CEventType -> IO ()
 
@@ -257,6 +257,7 @@ foreign import ccall unsafe "wev_async_stop" evAsyncStop :: EvLoopPtr
                                                          -> IO ()
 
 foreign import ccall unsafe "wev_timer_init" evTimerInit :: EvTimerPtr -> FunPtr TimerCallback -> EvTimestamp -> EvTimestamp -> IO ()
+foreign import ccall unsafe "wev_timer_set" evTimerSet :: EvTimerPtr -> EvTimestamp -> EvTimestamp -> IO ()
 foreign import ccall unsafe "wev_timer_start" evTimerStart :: EvLoopPtr -> EvTimerPtr -> IO ()
 foreign import ccall unsafe "wev_timer_stop" evTimerStop :: EvLoopPtr -> EvTimerPtr -> IO ()
 foreign import ccall unsafe "wev_timer_again" evTimerAgain :: EvLoopPtr -> EvTimerPtr -> IO ()
@@ -332,6 +333,11 @@ freeEvIo = free
 -- it with 'freeEvTimer'.
 mkEvTimer :: IO (EvTimerPtr)
 mkEvTimer = malloc
+
+evTimerSetRepeat :: EvTimerPtr -> Double -> IO ()
+evTimerSetRepeat p t = do
+  evtimer <- peek p
+  poke p evtimer { repeat = t }
 
 -- | free() an 'EvTimer'
 freeEvTimer :: EvTimerPtr -> IO ()

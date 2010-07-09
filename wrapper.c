@@ -40,10 +40,13 @@ void wev_io_stop (struct ev_loop *l, ev_io *w) { ev_io_stop(l, w); }
 /* ev_timer */
 void wev_timer_init (ev_timer *w, void *cb, ev_tstamp after, ev_tstamp repeat) 
 { ev_timer_init(w,cb,after,repeat); }
+void wev_timer_set (ev_timer *w, ev_tstamp after, ev_tstamp repeat) 
+{ ev_timer_set(w,after,repeat); }
 void wev_timer_start (struct ev_loop *l, ev_timer *w) { ev_timer_start(l, w); }
 void wev_timer_stop (struct ev_loop *l, ev_timer *w) { ev_timer_stop(l, w); }
 void wev_timer_again (struct ev_loop *l, ev_timer *w) { ev_timer_again(l, w); }
 ev_tstamp wev_timer_remaining (struct ev_loop *l, ev_timer *w) { ev_timer_remaining(l, w); }
+/* void wev_timer_set_repeat (ev_timer *w, ev_tstamp repeat) { w->repeat = repeat; } */
 
 /* ev_async */
 void wev_async_init (ev_async *w, void *cb) {
