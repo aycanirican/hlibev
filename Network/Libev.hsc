@@ -16,16 +16,34 @@ module Network.Libev
     , evUnloop
     , evLoopDestroy
 
-    -- ** Flags for 'evDefaultLoop'
+    -- ** EVLOOP_*, EVUNLOOP_* flags
+    , CEvLoopFlagType
+    , evloop_nonblock
+    , evloop_oneshot
+    , CEvUnloopFlagType
+    , evunloop_cancel
+    , evunloop_one
+    , evunloop_all
+
+    -- ** EVFLAG_* flags
+    , CEvFlagType
     , evRecommendedBackends
     , evflag_auto
     , evflag_noenv
+    , evflag_forkcheck
+    , evflag_noinotify
+    , evflag_nosigfd
+    , evflag_signalfd
+
+    -- ** EVBACKEND_* flags
+    , CEvBackendFlagType
     , evbackend_select
     , evbackend_poll
     , evbackend_epoll
     , evbackend_kqueue
     , evbackend_devpoll
     , evbackend_port
+    , evbackend_all
 
     -- ** Locking for event loops
     , MutexCallback
@@ -34,9 +52,26 @@ module Network.Libev
 
     -- ** Event flags
     , CEventType
-    , CEvFlagType
+    , ev_undef
+    , ev_none
     , ev_read
     , ev_write
+    , ev__iofdset
+    , ev_io
+    , ev_timeout
+    , ev_timer
+    , ev_periodic
+    , ev_signal
+    , ev_child
+    , ev_stat
+    , ev_idle
+    , ev_prepare
+    , ev_check
+    , ev_embed
+    , ev_fork
+    , ev_async
+    , ev_custom
+    , ev_error
 
     -- * @ev\_io@
     -- | See libev docs:  <http://pod.tst.eu/http://cvs.schmorp.de/libev/ev.pod#code_ev_io_code_is_this_file_descrip>
@@ -106,6 +141,30 @@ import Foreign.C
 -- 'ev_write'. TODO: deprecate and replace by a datatype
 type CEventType = CInt
 
+-- | eventmask, revents, events...
+#{enum CEventType, ,
+   ev_undef    = EV_UNDEF
+ , ev_none     = EV_NONE
+ , ev_read     = EV_READ
+ , ev_write    = EV_WRITE
+ , ev__iofdset = EV__IOFDSET
+ , ev_io       = EV_IO
+ , ev_timeout  = EV_TIMEOUT
+ , ev_timer    = EV_TIMER
+ , ev_periodic = EV_PERIODIC
+ , ev_signal   = EV_SIGNAL
+ , ev_child    = EV_CHILD
+ , ev_stat     = EV_STAT
+ , ev_idle     = EV_IDLE
+ , ev_prepare  = EV_PREPARE
+ , ev_check    = EV_CHECK
+ , ev_embed    = EV_EMBED
+ , ev_fork     = EV_FORK
+ , ev_async    = EV_ASYNC
+ , ev_custom   = EV_CUSTOM
+ , ev_error    = EV_ERROR
+}
+
 -- | 'CEvFlagType' is a bitfield used to pass flags into
 -- 'evDefaultLoop'. Values ('evflag_auto', 'evflag_noenv', etc.) are combined
 -- with bitwise or. TODO: replace with a newtype with a monoid instance
@@ -114,18 +173,37 @@ type CEvFlagType = CInt
 #{enum CEvFlagType, ,
    evflag_auto       = EVFLAG_AUTO
  , evflag_noenv      = EVFLAG_NOENV
- , evbackend_select  = EVBACKEND_SELECT
+ , evflag_forkcheck  = EVFLAG_FORKCHECK
+ , evflag_noinotify  = EVFLAG_NOINOTIFY
+ , evflag_nosigfd    = EVFLAG_NOSIGFD
+ , evflag_signalfd   = EVFLAG_SIGNALFD
+}
+
+type CEvBackendFlagType = CInt
+
+#{enum CEvBackendFlagType, ,
+   evbackend_select  = EVBACKEND_SELECT
  , evbackend_poll    = EVBACKEND_POLL
  , evbackend_epoll   = EVBACKEND_EPOLL
  , evbackend_kqueue  = EVBACKEND_KQUEUE
  , evbackend_devpoll = EVBACKEND_DEVPOLL
  , evbackend_port    = EVBACKEND_PORT
+ , evbackend_all     = EVBACKEND_ALL
 }
 
-#{enum CEventType, ,
-     ev_read  = EV_READ
-   , ev_write = EV_WRITE
+type CEvLoopFlagType = CInt
+#{enum CEvLoopFlagType, , 
+   evloop_nonblock = EVLOOP_NONBLOCK
+ , evloop_oneshot  = EVLOOP_ONESHOT
 }
+
+type CEvUnloopFlagType = CInt
+#{enum CEvUnloopFlagType, ,
+   evunloop_cancel = EVUNLOOP_CANCEL
+ , evunloop_one    = EVUNLOOP_ONE
+ , evunloop_all    = EVUNLOOP_ALL
+}
+
 
 data EvLoop
 type EvLoopPtr    = Ptr EvLoop
