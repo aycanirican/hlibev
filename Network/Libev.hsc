@@ -134,6 +134,7 @@ import Prelude hiding (repeat)
 import Foreign
 import Foreign.C
 
+#define EV_COMPAT3 1
 #include <ev.h>
 
 -- | 'CEventType' is a bitfield used to flag whether a file descriptor is

@@ -1,5 +1,5 @@
 Name:            hlibev
-Version:         0.2.8
+Version:         0.4.0
 Synopsis:        FFI interface to libev
 Description:     FFI interface to libev
 Homepage:        http://github.com/aycanirican/hlibev
