@@ -14,7 +14,7 @@ stdinCb evLoopPtr evIoPtr revents = do
   evUnloop evLoopPtr 2 {- 2 = EVUNLOOP_ALL -}
 
 -- Another callback, this time for a timeout.
-timeoutCb :: IoCallback
+timeoutCb :: TimerCallback
 timeoutCb evLoopPtr evIoPtr revents = do
   putStrLn "timeout"
   evUnloop evLoopPtr 1 {- 1 = EVUNLOOP_ONE -}
