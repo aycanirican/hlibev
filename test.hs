@@ -1,21 +1,16 @@
-{-# LANGUAGE ForeignFunctionInterface#-}
-{-# OPTIONS -fvia-C -O2 #-}
+{-# LANGUAGE ForeignFunctionInterface #-}
+
 module Main where
 
 import System.IO
 import Foreign
 import Foreign.Marshal.Alloc
 import Foreign.C
-
 import System.Environment (getArgs)
-
 import Network hiding (accept)
 import Network.Libev as EV
 
-import Network.Socket -- hiding (send, sendTo, recv, recvFrom)
--- import Network.Socket.ByteString
--- import qualified Data.ByteString as B
-import Data.Char (ord)
+import Network.Socket (fdSocket)
 
 import Control.Concurrent
 import Control.Exception (finally)
@@ -27,62 +22,55 @@ import Control.Exception (finally)
 --   evUnloop loop 0
 --   return ()
 
--- bind :: String -> String -> IO Socket
--- bind node service = do
---   putStrLn "Binding..."
---   addrinfos <- getAddrInfo Nothing (Just node) (Just service)
---   let serveraddr = head addrinfos
---   sock <- socket (addrFamily serveraddr) Stream defaultProtocol
---   bindSocket sock (addrAddress serveraddr)
---   listen sock 10
---   return sock
+testData = "HTTP/1.1 200 OK\nContent-Length: 13\nContent-Type:text/plain;charset=utf-8\n\nHello, World!\n"
 
--- testData = B.pack $ map (fromIntegral . ord) "HTTP/1.1 200 OK\nContent-Type:text/html;charset=UTF-8\n\n<html><body><p>Haskell and libev working together...</p></body></html>\n"
-testData = "HTTP/1.1 200 OK\nContent-Type:text/html;charset=UTF-8\n\n<html><body><p>Haskell and libev working together...</p></body></html>\n"
+data Server = 
+    Server { serverManager :: !EvLoopPtr
+           , serverSocket :: !Socket
+           , serverResponse :: !CString
+           }
 
-processSocket fd = do
-  _ <- allocaBytes 1024 $ \ptr -> c_read fd ptr 1024
-  _ <- withCString testData $ \str -> c_write fd str 125
+processSocket fd resp = do
+  _ <- allocaBytes 256 $ \ptr -> c_read fd ptr 256
+  _ <- c_write fd resp 89
   c_close fd
   return ()
 
-connectorCB :: CInt -> IoCallback
-connectorCB fd l w _ = do
+connectorCB :: CInt -> CString -> IoCallback
+connectorCB fd resp l w _ = do
   evIoStop l w
   free w
-  --putStrLn $ "Connector Called on: " ++ show (fdSocket s)
-  forkIO (processSocket fd)
-  --putStrLn $ "Connector socket closed: " ++ show (fdSocket s)
+  forkIO (processSocket fd resp)
   return ()
 
-acceptorCB :: Socket -> IoCallback
-acceptorCB s l _ _ = do
-  --putStrLn "Accepting..."
+acceptorCB :: Socket -> CString -> IoCallback
+acceptorCB s resp l _ _ = do
   fd <- c_accept (fdSocket s)
-  --putStrLn "Accepted."
   ioW <- mkEvIo
-  ioCB <- mkIoCallback $ connectorCB fd
+  ioCB <- mkIoCallback $ connectorCB fd resp
   evIoInit ioW ioCB fd ev_read
   evIoStart l ioW
-  --putStrLn "client callback registered."
   return ()
 
-start servSock = withSocketsDo $ do
-  loop <- evLoopNew 0
+start server = withSocketsDo $ do
   ioW <- mkEvIo
-  ioCB <- mkIoCallback $ acceptorCB servSock
-  evIoInit ioW ioCB (fdSocket servSock) ev_read
+  ioCB <- mkIoCallback $ acceptorCB sock resp
+  evIoInit ioW ioCB (fdSocket sock) ev_read
   evIoStart loop ioW
   evLoop loop 0
-  putStrLn "Loop Done."
   freeHaskellFunPtr ioCB
   return ()
-
+    where
+      loop = serverManager server
+      sock = serverSocket server
+      resp = serverResponse server
+ 
 main :: IO ()
 main = do
-  [portStr] <- getArgs
-  let port = fromIntegral (read portStr :: Int)
-  servSock <- listenOn $ PortNumber port
-  putStrLn $ "listening on: " ++ show port
-  start servSock `finally` sClose servSock
+  port:_ <- getArgs 
+  resp <- newCString testData
+  sock <- listenOn $ PortNumber $ fromIntegral (read port :: Int)
+  em <- evLoopNew 0
+  let server = Server em sock resp
+  start server `finally` sClose sock
   return ()
