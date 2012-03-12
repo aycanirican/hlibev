@@ -15,14 +15,6 @@ import Network.Socket (fdSocket)
 import Control.Concurrent
 import Control.Exception (finally)
 
--- stdinCB :: IoCallback
--- stdinCB loop watcher revents = do
---   putStrLn "Stdin Ready"
---   evIoStop loop watcher
---   evUnloop loop 0
---   return ()
-
-testData = "HTTP/1.1 200 OK\nContent-Length: 13\nContent-Type:text/plain;charset=utf-8\n\nHello, World!\n"
 
 data Server = 
     Server { serverManager :: !EvLoopPtr
@@ -66,11 +58,12 @@ start server = withSocketsDo $ do
       resp = serverResponse server
  
 main :: IO ()
-main = do
-  port:_ <- getArgs 
-  resp <- newCString testData
-  sock <- listenOn $ PortNumber $ fromIntegral (read port :: Int)
+main = withSocketsDo $ do
+  resp <- newCString msg
+  sock <- listenOn $ PortNumber 5002
   em <- evLoopNew 0
   let server = Server em sock resp
   start server `finally` sClose sock
   return ()
+
+msg = "HTTP/1.1 200 OK\nContent-Length: 13\nContent-Type:text/plain;charset=utf-8\n\nHello, World!\n"
